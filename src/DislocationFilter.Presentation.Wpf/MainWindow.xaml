@@ -1,0 +1,185 @@
+﻿<Window x:Class="DislocationFilter.Presentation.Wpf.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="{Binding Title}"
+        Height="790"
+        Width="1240">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock
+            Grid.Row="0"
+            HorizontalAlignment="Center"
+            FontSize="28"
+            Text="{Binding Title}" />
+
+        <TextBlock
+            Grid.Row="1"
+            Margin="0,12,0,0"
+            HorizontalAlignment="Center"
+            Text="{Binding SelectedExcelFilePath}" />
+
+        <StackPanel
+            Grid.Row="2"
+            Margin="0,24,0,8"
+            HorizontalAlignment="Center"
+            Orientation="Horizontal">
+            <Button
+                MinWidth="130"
+                Margin="0,0,12,0"
+                Command="{Binding ReloadTitleCommand}"
+                Content="Reload title" />
+            <Button
+                MinWidth="130"
+                Margin="0,0,12,0"
+                Command="{Binding ResetTitleCommand}"
+                Content="Reset title" />
+            <Button
+                MinWidth="130"
+                Margin="0,0,12,0"
+                Command="{Binding GoBackCommand}"
+                Content="Go back" />
+            <Button
+                MinWidth="190"
+                Command="{Binding ExportFilteredWorkbookCommand}"
+                Content="Create filtered workbook" />
+        </StackPanel>
+
+        <TextBlock
+            Grid.Row="3"
+            Margin="0,0,0,12"
+            Foreground="SeaGreen"
+            HorizontalAlignment="Center"
+            Text="{Binding ExportStatus}" />
+
+        <Grid Grid.Row="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="3*" />
+            </Grid.ColumnDefinitions>
+
+            <GroupBox Grid.Column="0" Header="Column Names" Margin="0,0,12,0">
+                <ListBox
+                    ItemsSource="{Binding ColumnNames}"
+                    SelectedItem="{Binding SelectedColumnName, Mode=TwoWay}" />
+            </GroupBox>
+
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="2*" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <GroupBox Grid.Row="0" Header="Filter Definition" Margin="0,0,0,12">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel Margin="8">
+                            <TextBlock Text="Selected column:" FontWeight="SemiBold" />
+                            <TextBlock Margin="0,2,0,8" Text="{Binding SelectedColumnName}" />
+
+                            <TextBlock Text="Detected type:" FontWeight="SemiBold" />
+                            <TextBlock Margin="0,2,0,8" Text="{Binding SelectedColumnValueTypeText}" />
+
+                            <TextBlock Text="Operation:" FontWeight="SemiBold" />
+                            <ComboBox
+                                Margin="0,4,0,12"
+                                ItemsSource="{Binding AvailableOperations}"
+                                SelectedItem="{Binding SelectedOperation, Mode=TwoWay}" />
+
+                            <TextBlock Margin="0,0,0,8" Foreground="IndianRed" Text="{Binding FilterError}" />
+
+                            <StackPanel Visibility="{Binding IsTextEqualsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="Exact text" />
+                                <TextBox Text="{Binding TextEqualsValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                            <StackPanel Visibility="{Binding IsTextContainsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="Contains substring" />
+                                <TextBox Text="{Binding TextContainsValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                            <StackPanel Visibility="{Binding IsTextListVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="Text list (comma-separated)" />
+                                <TextBox AcceptsReturn="True" MinHeight="80" TextWrapping="Wrap" Text="{Binding TextListRaw, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                            <StackPanel Visibility="{Binding IsNumberEqualsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="Number equals" />
+                                <TextBox Text="{Binding NumberEqualsValue, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                            <StackPanel Visibility="{Binding IsNumberRangeVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="Number range" />
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBox Width="140" Margin="0,0,8,0" Text="{Binding NumberRangeFrom, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Width="140" Text="{Binding NumberRangeTo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <StackPanel Visibility="{Binding IsNumberListVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="Number list (comma-separated)" />
+                                <TextBox AcceptsReturn="True" MinHeight="80" TextWrapping="Wrap" Text="{Binding NumberListRaw, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                            <StackPanel Visibility="{Binding IsDateEqualsVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="Date equals" />
+                                <DatePicker SelectedDate="{Binding DateEqualsValue, Mode=TwoWay}" />
+                            </StackPanel>
+
+                            <StackPanel Visibility="{Binding IsDateRangeVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="Date range" />
+                                <StackPanel Orientation="Horizontal">
+                                    <DatePicker Margin="0,0,8,0" SelectedDate="{Binding DateRangeFrom, Mode=TwoWay}" />
+                                    <DatePicker SelectedDate="{Binding DateRangeTo, Mode=TwoWay}" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <StackPanel Visibility="{Binding IsDateListVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+                                <TextBlock Text="Date list (yyyy-MM-dd, comma-separated)" />
+                                <TextBox AcceptsReturn="True" MinHeight="80" TextWrapping="Wrap" Text="{Binding DateListRaw, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                            </StackPanel>
+
+                            <Button
+                                Margin="0,12,0,0"
+                                HorizontalAlignment="Left"
+                                MinWidth="160"
+                                Command="{Binding AddFilterCommand}"
+                                Content="Add filter" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </GroupBox>
+
+                <GroupBox Grid.Row="1" Header="Configured Filters">
+                    <ListBox ItemsSource="{Binding ConfiguredFilters}">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel Margin="0,2">
+                                    <Button
+                                        DockPanel.Dock="Right"
+                                        Margin="12,0,0,0"
+                                        Padding="8,2"
+                                        Command="{Binding DataContext.RemoveFilterCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}"
+                                        Content="Remove" />
+                                    <TextBlock Text="{Binding DisplayText}" TextWrapping="Wrap" />
+                                </DockPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </GroupBox>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

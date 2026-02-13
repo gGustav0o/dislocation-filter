@@ -1,0 +1,36 @@
+﻿# Build artifacts
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+out/
+
+# NuGet
+*.nupkg
+*.snupkg
+packages/
+
+# IDE / tooling
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userprefs
+*.rsuser
+*.sln.docstates
+
+# Logs and local scratch
+*.log
+build.log
+.dotnet_cli_home/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Generated test/results
+TestResults/
+
+# Local data files (not versioned)
+tables/

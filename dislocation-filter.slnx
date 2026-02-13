@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/DislocationFilter.Domain/DislocationFilter.Domain.csproj" />
+  <Project Path="src/DislocationFilter.Application/DislocationFilter.Application.csproj" />
+  <Project Path="src/DislocationFilter.Infrastructure/DislocationFilter.Infrastructure.csproj" />
+  <Project Path="src/DislocationFilter.Presentation.Wpf/DislocationFilter.Presentation.Wpf.csproj" />
+</Solution>
