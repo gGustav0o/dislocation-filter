@@ -7,6 +7,7 @@ using DislocationFilter.Application.Common;
 using DislocationFilter.Application.Models;
 using DislocationFilter.Application.UseCases.Excel.ExportFilteredWorkbook;
 using DislocationFilter.Application.UseCases.Excel.GetColumnFilterDefinition;
+using DislocationFilter.Application.UseCases.Excel.GetColumnNames;
 using DislocationFilter.Application.UseCases.MainWindow.ReloadMainTitle;
 using DislocationFilter.Presentation.Wpf.Commands;
 using DislocationFilter.Presentation.Wpf.Dialogs;
@@ -21,8 +22,10 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     private readonly INavigationService _navigationService;
     private readonly ISaveExcelFileDialogService _saveExcelFileDialogService;
+    private readonly IExcelFileDialogService _excelFileDialogService;
     private readonly ICommandHandler<ReloadMainTitleCommand, Result<string, string>> _reloadMainTitleHandler;
     private readonly ICommandHandler<ExportFilteredWorkbookCommand, Result<string, ExportFilteredWorkbookResult>> _exportFilteredWorkbookHandler;
+    private readonly IQueryHandler<GetExcelColumnNamesQuery, Result<string, IReadOnlyList<string>>> _getColumnNamesHandler;
     private readonly IQueryHandler<GetExcelColumnFilterDefinitionQuery, Result<string, ExcelColumnFilterDefinition>> _filterDefinitionHandler;
     private readonly ISelectedExcelFileState _selectedExcelFileState;
     private readonly IExcelColumnNamesState _excelColumnNamesState;
@@ -39,17 +42,21 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     public MainWindowViewModel(
         INavigationService navigationService,
+        IExcelFileDialogService excelFileDialogService,
         ISaveExcelFileDialogService saveExcelFileDialogService,
         ICommandHandler<ReloadMainTitleCommand, Result<string, string>> reloadMainTitleHandler,
         ICommandHandler<ExportFilteredWorkbookCommand, Result<string, ExportFilteredWorkbookResult>> exportFilteredWorkbookHandler,
+        IQueryHandler<GetExcelColumnNamesQuery, Result<string, IReadOnlyList<string>>> getColumnNamesHandler,
         IQueryHandler<GetExcelColumnFilterDefinitionQuery, Result<string, ExcelColumnFilterDefinition>> filterDefinitionHandler,
         ISelectedExcelFileState selectedExcelFileState,
         IExcelColumnNamesState excelColumnNamesState)
     {
         _navigationService = navigationService;
+        _excelFileDialogService = excelFileDialogService;
         _saveExcelFileDialogService = saveExcelFileDialogService;
         _reloadMainTitleHandler = reloadMainTitleHandler;
         _exportFilteredWorkbookHandler = exportFilteredWorkbookHandler;
+        _getColumnNamesHandler = getColumnNamesHandler;
         _filterDefinitionHandler = filterDefinitionHandler;
         _selectedExcelFileState = selectedExcelFileState;
         _excelColumnNamesState = excelColumnNamesState;
@@ -71,6 +78,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         ReloadTitleCommand = new AsyncCommand(_ => ReloadTitleAsync());
         AddFilterCommand = new RelayCommand(_ => AddCurrentFilter(), _ => CanAddCurrentFilter());
         RemoveFilterCommand = new RelayCommand(RemoveFilter);
+        SelectExcelFileCommand = new AsyncCommand(_ => SelectExcelFileAsync());
         ExportFilteredWorkbookCommand = new AsyncCommand(_ => ExportFilteredWorkbookAsync(), () => CanExportFilteredWorkbook());
 
         if (ColumnNames.Count > 0)
@@ -207,6 +215,8 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     public ICommand RemoveFilterCommand { get; }
 
+    public IAsyncCommand SelectExcelFileCommand { get; }
+
     public IAsyncCommand ExportFilteredWorkbookCommand { get; }
 
     private void ResetTitle()
@@ -305,6 +315,48 @@ public sealed class MainWindowViewModel : ViewModelBase
     {
         return !string.IsNullOrWhiteSpace(SelectedExcelFilePath)
             && ConfiguredFilters.Count > 0;
+    }
+
+    private async Task SelectExcelFileAsync()
+    {
+        FilterError = string.Empty;
+        ExportStatus = string.Empty;
+
+        var selectedFilePath = _excelFileDialogService.RequestExcelFilePath();
+        if (string.IsNullOrWhiteSpace(selectedFilePath))
+        {
+            return;
+        }
+
+        var columnsResult = await _getColumnNamesHandler.Handle(
+            new GetExcelColumnNamesQuery(selectedFilePath),
+            CancellationToken.None);
+
+        if (columnsResult.IsFailure)
+        {
+            FilterError = columnsResult.Error ?? "Failed to read column names.";
+            return;
+        }
+
+        _selectedExcelFileState.Set(selectedFilePath);
+        _excelColumnNamesState.Set(columnsResult.Value!);
+
+        SelectedExcelFilePath = selectedFilePath;
+        Title = BuildTitle(DefaultTitle, selectedFilePath);
+
+        ConfiguredFilters.Clear();
+        OnPropertyChanged(nameof(ColumnNames));
+
+        if (ColumnNames.Count > 0)
+        {
+            SelectedColumnName = ColumnNames[0];
+        }
+        else
+        {
+            SelectedColumnName = null;
+            AvailableOperations = Array.Empty<string>();
+            SelectedOperation = null;
+        }
     }
 
     private async Task ExportFilteredWorkbookAsync()
